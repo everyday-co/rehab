@@ -1,0 +1,2 @@
+- Supabase schema applied via MCP migration `init_schema` (profiles, properties, rehab_items, costs, expenses, timeline, comps, photos, flip_results).
+- Installed shadcn components (sonner instead of toast) and Tailwind v4 theme retained.
