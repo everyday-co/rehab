@@ -64,6 +64,8 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
   // Track which fields were auto-filled for visual indication
   const enrichedFields = enrichmentResult ? Object.keys(enrichmentResult.property) : [];
   const isEnriched = (fieldName: string) => enrichedFields.includes(fieldName);
+  const enrichedValue = (fieldName: keyof PropertyFormValues) =>
+    enrichmentResult?.property?.[fieldName];
   const arvSuggestion = enrichmentResult?.arvSuggestion;
   
   const router = useRouter();
@@ -124,7 +126,7 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-20">
         {/* Property Address */}
         <Card>
           <CardHeader>
@@ -144,7 +146,11 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                     {isEnriched("address") && <EnrichedIndicator />}
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St" {...field} />
+                    <Input
+                      placeholder="123 Main St"
+                      {...field}
+                      className={cn(isEnriched("address") && "border-primary/40 bg-primary/5")}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,7 +165,11 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                   <FormItem>
                     <FormLabel>City *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Minneapolis" {...field} />
+                      <Input
+                        placeholder="Minneapolis"
+                        {...field}
+                        className={cn(isEnriched("city") && "border-primary/40 bg-primary/5")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +211,11 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                   <FormItem>
                     <FormLabel>ZIP *</FormLabel>
                     <FormControl>
-                      <Input placeholder="55401" {...field} />
+                      <Input
+                        placeholder="55401"
+                        {...field}
+                        className={cn(isEnriched("zip") && "border-primary/40 bg-primary/5")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -239,6 +253,7 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                         onChange={(e) =>
                           field.onChange(e.target.value ? Number(e.target.value) : null)
                         }
+                        className={cn(isEnriched("sqft") && "border-primary/40 bg-primary/5")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -310,6 +325,7 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                         onChange={(e) =>
                           field.onChange(e.target.value ? Number(e.target.value) : null)
                         }
+                        className={cn(isEnriched("beds") && "border-primary/40 bg-primary/5")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -403,6 +419,7 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                         onChange={(e) =>
                           field.onChange(e.target.value ? Number(e.target.value) : null)
                         }
+                        className={cn(isEnriched("yearBuilt") && "border-primary/40 bg-primary/5")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -438,6 +455,9 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                         onChange={(e) =>
                           field.onChange(e.target.value ? Number(e.target.value) : null)
                         }
+                        className={cn(
+                          isEnriched("purchasePrice") && "border-primary/40 bg-primary/5"
+                        )}
                       />
                     </FormControl>
                     <FormDescription>Enter without commas or $</FormDescription>
@@ -531,15 +551,16 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                   <FormItem>
                     <FormLabel>Target ARV (Low)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="350000"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(e.target.value ? Number(e.target.value) : null)
-                        }
-                      />
+                    <Input
+                      type="number"
+                      placeholder="350000"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? Number(e.target.value) : null)
+                      }
+                      className={cn(isEnriched("arvLow") && "border-primary/40 bg-primary/5")}
+                    />
                     </FormControl>
                     <FormDescription>Conservative estimate</FormDescription>
                     <FormMessage />
@@ -554,15 +575,16 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
                   <FormItem>
                     <FormLabel>Target ARV (High)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="375000"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(e.target.value ? Number(e.target.value) : null)
-                        }
-                      />
+                    <Input
+                      type="number"
+                      placeholder="375000"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? Number(e.target.value) : null)
+                      }
+                      className={cn(isEnriched("arvHigh") && "border-primary/40 bg-primary/5")}
+                    />
                     </FormControl>
                     <FormDescription>Optimistic estimate</FormDescription>
                     <FormMessage />
@@ -636,25 +658,34 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
         </Card>
 
         {/* Submit */}
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Save & Continue"
-            )}
-          </Button>
+        {/* Sticky footer */}
+        <div className="sticky bottom-4 flex flex-col gap-2 rounded-xl border border-border/80 bg-background/95 px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+          {enrichmentResult && (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Auto-filled fields can be edited before saving.
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save & Continue"
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

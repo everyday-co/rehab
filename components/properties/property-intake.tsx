@@ -1,32 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Search, Link2, Loader2, CheckCircle2, XCircle, AlertCircle, Sparkles, ChevronDown } from "lucide-react";
+import { Search, Link2, Loader2, CheckCircle2, XCircle, AlertCircle, Sparkles, ChevronDown, Home, PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Surface } from "@/components/ui/surface";
 import { cn } from "@/lib/utils";
 import { isSupportedListingUrl, getListingDomain } from "@/lib/enrichment/types";
-import type { EnrichmentResult, EnrichmentStatus, SourceStatus } from "@/lib/enrichment/types";
-import type { PropertyFormValues } from "@/lib/validations";
+import type { EnrichmentResult, SourceStatus } from "@/lib/enrichment/types";
 
 interface PropertyIntakeProps {
   onEnrichmentComplete: (result: EnrichmentResult) => void;
   onSkip: () => void;
+  onStart?: () => void;
   isEnabled?: boolean;
 }
 
@@ -65,6 +54,7 @@ function StatusBadge({ status, label }: { status: SourceStatus; label: string })
 export function PropertyIntake({
   onEnrichmentComplete,
   onSkip,
+  onStart,
   isEnabled = true,
 }: PropertyIntakeProps) {
   const [mode, setMode] = useState<IntakeMode>("address");
@@ -107,6 +97,7 @@ export function PropertyIntake({
       return;
     }
 
+    onStart?.();
     startTransition(async () => {
       try {
         const response = await fetch("/api/properties/enrich", {
@@ -144,135 +135,103 @@ export function PropertyIntake({
   }
 
   return (
-    <Card className="border-2 border-dashed border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-lg">Quick Start with Auto-Fill</CardTitle>
-            <CardDescription>
-              Enter an address or paste a listing URL to auto-populate property details
-            </CardDescription>
-          </div>
+    <div className="flex flex-col items-center gap-8 rounded-2xl border border-border/70 bg-gradient-to-b from-background to-muted/40 p-6 sm:p-10">
+      {/* Hero */}
+      <div className="text-center space-y-3">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+          <Sparkles className="h-7 w-7 text-primary" />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Mode Toggle */}
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Add Your Property</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Find it instantly or enter details manually
+          </p>
+        </div>
+      </div>
+
+      {/* Primary input surface */}
+      <Surface className="w-full max-w-3xl space-y-4">
+        <Label htmlFor="intake-input" className="text-sm font-medium text-muted-foreground">
+          Search address or paste listing URL
+        </Label>
+
         <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              id="intake-input"
+              placeholder={
+                mode === "address"
+                  ? "3811 Whitetail Dr, Shakopee, MN 55379"
+                  : "https://zillow.com/homedetails/..."
+              }
+              value={mode === "address" ? addressInput : urlInput}
+              onChange={(e) => {
+                if (mode === "address") {
+                  setAddressInput(e.target.value);
+                  setError(null);
+                } else {
+                  handleUrlChange(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isPending) {
+                  e.preventDefault();
+                  handleEnrich();
+                }
+              }}
+              disabled={isPending}
+              className={cn(urlDomain && mode === "url" && "pr-24", "h-12 text-base")}
+            />
+            {urlDomain && mode === "url" && (
+              <Badge
+                variant="secondary"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs"
+              >
+                {urlDomain}
+              </Badge>
+            )}
+          </div>
           <Button
             type="button"
-            variant={mode === "address" ? "default" : "outline"}
+            onClick={handleEnrich}
+            disabled={
+              isPending ||
+              (mode === "address" ? !addressInput.trim() : !urlInput.trim() || !!error)
+            }
+            className="h-12 px-5"
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Go"}
+          </Button>
+        </div>
+
+        {/* Mode pills */}
+        <div className="flex gap-2 text-sm">
+          <Button
+            type="button"
+            variant={mode === "address" ? "secondary" : "ghost"}
             size="sm"
             onClick={() => {
               setMode("address");
               setError(null);
             }}
-            className="flex-1"
+            className="gap-2"
           >
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="h-4 w-4" />
             Address
           </Button>
           <Button
             type="button"
-            variant={mode === "url" ? "default" : "outline"}
+            variant={mode === "url" ? "secondary" : "ghost"}
             size="sm"
             onClick={() => {
               setMode("url");
               setError(null);
             }}
-            className="flex-1"
+            className="gap-2"
           >
-            <Link2 className="mr-2 h-4 w-4" />
+            <Link2 className="h-4 w-4" />
             Listing URL
           </Button>
-        </div>
-
-        {/* Input Area */}
-        <div className="space-y-2">
-          {mode === "address" ? (
-            <>
-              <Label htmlFor="address-input">Property Address</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="address-input"
-                  placeholder="3811 Whitetail Dr, Shakopee, MN 55379"
-                  value={addressInput}
-                  onChange={(e) => {
-                    setAddressInput(e.target.value);
-                    setError(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !isPending) {
-                      e.preventDefault();
-                      handleEnrich();
-                    }
-                  }}
-                  disabled={isPending}
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  onClick={handleEnrich} 
-                  disabled={isPending || !addressInput.trim()}
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Look Up"
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                We&apos;ll fetch property details from public records
-              </p>
-            </>
-          ) : (
-            <>
-              <Label htmlFor="url-input">Listing URL</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="url-input"
-                    placeholder="https://zillow.com/homedetails/..."
-                    value={urlInput}
-                    onChange={(e) => handleUrlChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isPending) {
-                        e.preventDefault();
-                        handleEnrich();
-                      }
-                    }}
-                    disabled={isPending}
-                    className={cn(urlDomain && "pr-24")}
-                  />
-                  {urlDomain && (
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs"
-                    >
-                      {urlDomain}
-                    </Badge>
-                  )}
-                </div>
-                <Button 
-                  type="button" 
-                  onClick={handleEnrich} 
-                  disabled={isPending || !urlInput.trim() || !!error}
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Import"
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Supports Zillow, Redfin, and Realtor.com listings
-              </p>
-            </>
-          )}
         </div>
 
         {/* Error Display */}
@@ -282,52 +241,69 @@ export function PropertyIntake({
           </div>
         )}
 
-        {/* Loading State */}
-        {isPending && (
-          <div className="rounded-md bg-muted p-4">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <div>
-                <p className="font-medium">Enriching property data...</p>
-                <p className="text-sm text-muted-foreground">
-                  This may take a few seconds
-                </p>
-              </div>
+        {/* Info text */}
+        <div className="text-xs text-muted-foreground">
+          Paste a Zillow, Redfin, or Realtor.com URL for best results. We’ll fetch photos, listing data, and public records.
+        </div>
+      </Surface>
+
+      {/* Option cards */}
+      <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+        <Surface className="flex items-start gap-3" padding="md">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <Link2 className="h-5 w-5 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Paste a listing URL</p>
+            <p className="text-sm text-muted-foreground">Zillow, Redfin, or Realtor.com</p>
+            <Button
+              type="button"
+              variant="link"
+              className="px-0 text-primary"
+              onClick={() => setMode("url")}
+            >
+              Use URL
+            </Button>
+          </div>
+        </Surface>
+
+        <Surface className="flex items-start gap-3" padding="md">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+            <PenLine className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Enter manually</p>
+            <p className="text-sm text-muted-foreground">I’ll type the details myself</p>
+            <Button
+              type="button"
+              variant="link"
+              className="px-0 text-primary"
+              onClick={onSkip}
+            >
+              Skip auto-fill
+            </Button>
+          </div>
+        </Surface>
+      </div>
+
+      {/* Helper / Pro tip */}
+      <div className="w-full max-w-2xl rounded-xl border border-dashed border-border/70 bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">Pro tip:</span> Paste a listing URL and we’ll auto-fill everything, including photos and price history.
+      </div>
+
+      {/* Loading State Inline */}
+      {isPending && (
+        <Surface className="w-full max-w-3xl">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="font-medium">Enriching property data…</p>
+              <p className="text-sm text-muted-foreground">This may take a few seconds</p>
             </div>
           </div>
-        )}
-
-        {/* Skip to Manual */}
-        <Collapsible open={manualExpanded} onOpenChange={setManualExpanded}>
-          <CollapsibleTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="w-full text-muted-foreground hover:text-foreground"
-            >
-              <ChevronDown 
-                className={cn(
-                  "mr-2 h-4 w-4 transition-transform",
-                  manualExpanded && "rotate-180"
-                )} 
-              />
-              Or enter details manually
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSkip}
-              className="w-full"
-            >
-              Skip Auto-Fill &amp; Enter Manually
-            </Button>
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
-    </Card>
+        </Surface>
+      )}
+    </div>
   );
 }
 

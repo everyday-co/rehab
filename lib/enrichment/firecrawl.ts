@@ -120,7 +120,8 @@ function getExtractionPrompt(domain: SupportedDomain): string {
  */
 export async function extractListingData(
   url: string,
-  domain: SupportedDomain
+  domain: SupportedDomain,
+  controller?: AbortController
 ): Promise<{
   listing: ListingData;
   photos: PhotoData[];
@@ -146,6 +147,7 @@ export async function extractListingData(
       prompt: getExtractionPrompt(domain),
       schema: LISTING_SCHEMA,
     }),
+    signal: controller?.signal,
   });
 
   if (!response.ok) {

@@ -15,29 +15,28 @@ import {
   type PhotoData,
 } from "@/lib/enrichment/types";
 import { parseFullAddress, generateAddressCacheKey } from "@/lib/enrichment/normalize-address";
-import { 
-  lookupPropertyByFullAddress, 
+import {
+  lookupPropertyByFullAddress,
   isBatchDataConfigured,
   createMockBatchDataResult,
   type BatchDataResult,
 } from "@/lib/enrichment/batchdata";
-import { 
-  extractListingData, 
+import {
+  extractListingData,
   isFirecrawlConfigured,
   createMockListingData,
   createMockPhotos,
   type ListingData,
 } from "@/lib/enrichment/firecrawl";
-import { 
-  getCachedBatchData, 
+import {
+  getCachedBatchData,
   setCachedBatchData,
   getCachedListingEnrichment,
   setCachedListingEnrichment,
-  getMemoryCached,
-  setMemoryCached,
 } from "@/lib/enrichment/cache";
 import { mergeEnrichmentData } from "@/lib/enrichment/merge";
-import { suggestARV } from "@/lib/enrichment/arv-suggester";
+import { suggestARV, validateARV } from "@/lib/enrichment/arv-suggester";
+import { fetchComps, createMockComps } from "@/lib/enrichment/comps";
 
 // Check if enrichment is enabled
 const ENRICHMENT_ENABLED = process.env.ENABLE_PROPERTY_ENRICHMENT !== "false";
@@ -64,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json();
+    const force = Boolean(body.force);
     const parseResult = enrichmentRequestSchema.safeParse(body);
     
     if (!parseResult.success) {
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     let batchDataResult: BatchDataResult | null = null;
     let listingData: ListingData | null = null;
     let photos: PhotoData[] = [];
+  let comps: any[] = [];
     let resolvedAddress = address;
 
     // If listing URL provided, scrape it first
@@ -98,12 +99,12 @@ export async function POST(request: NextRequest) {
 
       // Check cache first
       const cachedResult = await getCachedListingEnrichment(listingUrl);
-      if (cachedResult) {
+      if (cachedResult && !force) {
         return NextResponse.json(cachedResult);
       }
 
       const domain = getListingDomain(listingUrl);
-      
+
       if (USE_MOCKS) {
         // Use mock data for development
         listingData = createMockListingData();
@@ -112,7 +113,11 @@ export async function POST(request: NextRequest) {
         status.photos = "success";
       } else if (isFirecrawlConfigured() && domain) {
         try {
-          const extracted = await extractListingData(listingUrl, domain.domain);
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const extracted = await extractListingData(listingUrl, domain.domain, controller);
+          clearTimeout(timeout);
+
           listingData = extracted.listing;
           photos = extracted.photos;
           status.firecrawl = "success";
@@ -138,12 +143,14 @@ export async function POST(request: NextRequest) {
       
       if (parsedAddress) {
         // Check cache first
-        const cachedBatchData = await getCachedBatchData(
-          parsedAddress.street,
-          parsedAddress.city,
-          parsedAddress.state,
-          parsedAddress.zip
-        );
+        const cachedBatchData = force
+          ? null
+          : await getCachedBatchData(
+              parsedAddress.street,
+              parsedAddress.city,
+              parsedAddress.state,
+              parsedAddress.zip
+            );
 
         if (cachedBatchData) {
           batchDataResult = cachedBatchData;
@@ -159,7 +166,10 @@ export async function POST(request: NextRequest) {
           status.batchdata = "success";
         } else if (isBatchDataConfigured()) {
           try {
-            batchDataResult = await lookupPropertyByFullAddress(resolvedAddress);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            batchDataResult = await lookupPropertyByFullAddress(resolvedAddress, controller);
+            clearTimeout(timeout);
             status.batchdata = "success";
 
             // Cache the result
@@ -228,12 +238,39 @@ export async function POST(request: NextRequest) {
 
     // Generate ARV suggestion if we have enough data
     let arvSuggestion = null;
+    let arvWarnings: string[] | undefined;
     if (batchDataResult && (batchDataResult.totalSqft || batchDataResult.aboveGradeSqft)) {
+      // Fetch comps (mocked when applicable)
+      try {
+        if (USE_MOCKS && batchDataResult.address && batchDataResult.city && batchDataResult.state) {
+          comps = createMockComps({
+            address: batchDataResult.address,
+            city: batchDataResult.city,
+            state: batchDataResult.state,
+            zip: batchDataResult.zip,
+          });
+        } else if (batchDataResult.address && batchDataResult.city && batchDataResult.state) {
+          comps = await fetchComps({
+            address: batchDataResult.address,
+            city: batchDataResult.city,
+            state: batchDataResult.state,
+            zip: batchDataResult.zip,
+          });
+        }
+      } catch (error) {
+        console.error("Comps fetch failed:", error);
+      }
+
       arvSuggestion = suggestARV({
         subjectProperty: batchDataResult,
         listing: listingData,
-        userComps: [],
+        userComps: comps,
       });
+
+      if (arvSuggestion && comps.length > 0) {
+        const validation = validateARV(arvSuggestion, comps);
+        arvWarnings = validation.warnings;
+      }
     }
 
     // Merge all data sources
@@ -248,6 +285,8 @@ export async function POST(request: NextRequest) {
     // Add duplicate info
     const result: EnrichmentResult = {
       ...enrichmentResult,
+      comps,
+      arvWarnings,
       duplicate,
     };
 

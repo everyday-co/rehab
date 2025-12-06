@@ -78,6 +78,20 @@ export interface PriceHistoryEntry {
   event: string;
 }
 
+/** Comparable sale */
+export interface Comp {
+  address: string;
+  city: string;
+  state: string;
+  zip?: string;
+  salePrice: number;
+  sqft: number;
+  beds?: number;
+  baths?: number;
+  soldDate?: string;
+  distanceMiles?: number;
+}
+
 /** Photo data from listing */
 export interface PhotoData {
   url: string;
@@ -110,6 +124,10 @@ export interface EnrichmentResult {
   listing: ListingData | null;
   /** Photo URLs */
   photos: PhotoData[];
+  /** Comparable sales */
+  comps?: Comp[];
+  /** ARV validation warnings */
+  arvWarnings?: string[];
   /** ARV suggestion if available */
   arvSuggestion: ARVSuggestion | null;
   /** Status of each source */

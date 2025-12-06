@@ -75,6 +75,19 @@ export const listingDataSchema = z.object({
     .optional(),
 });
 
+export const compSchema = z.object({
+  address: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zip: z.string().optional(),
+  salePrice: z.number(),
+  sqft: z.number(),
+  beds: z.number().optional(),
+  baths: z.number().optional(),
+  soldDate: z.string().optional(),
+  distanceMiles: z.number().optional(),
+});
+
 /**
  * Schema for photo data
  */
@@ -118,6 +131,8 @@ export const enrichmentResultSchema = z.object({
   batchData: batchDataResultSchema.nullable(),
   listing: listingDataSchema.nullable(),
   photos: z.array(photoDataSchema),
+  comps: z.array(compSchema).optional(),
+  arvWarnings: z.array(z.string()).optional(),
   arvSuggestion: arvSuggestionSchema.nullable(),
   status: enrichmentStatusSchema,
   confidence: z.number().min(0).max(100),

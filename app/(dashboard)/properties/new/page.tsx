@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PropertyForm } from "@/components/properties/property-form";
-import { PropertyIntake, EnrichmentPreview } from "@/components/properties/property-intake";
+import { PropertyIntake } from "@/components/properties/property-intake";
+import { EnrichmentResultCard } from "@/components/properties/enrichment-result";
+import { EnrichmentLoading } from "@/components/properties/enrichment-loading";
+import { ProgressSteps } from "@/components/ui/progress-steps";
 import type { EnrichmentResult } from "@/lib/enrichment/types";
 import type { PropertyFormValues } from "@/lib/validations";
 
-type IntakeStep = "intake" | "preview" | "form";
+type IntakeStep = "intake" | "loading" | "preview" | "form";
+const STORAGE_KEY = "rehab:intake:enrichment";
 
 export default function NewPropertyPage() {
   const [step, setStep] = useState<IntakeStep>("intake");
@@ -20,8 +24,33 @@ export default function NewPropertyPage() {
   // Check if enrichment is enabled via env
   const isEnrichmentEnabled = process.env.NEXT_PUBLIC_ENABLE_PROPERTY_ENRICHMENT !== "false";
 
+  // Load persisted enrichment state for the session
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.sessionStorage.getItem(STORAGE_KEY) : null;
+    if (saved) {
+      try {
+        const parsed: EnrichmentResult = JSON.parse(saved);
+        setEnrichmentResult(parsed);
+        setFormDefaults(parsed.property);
+        setStep("preview");
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }, []);
+
+  const persistEnrichment = (result: EnrichmentResult | null) => {
+    if (typeof window === "undefined") return;
+    if (result) {
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    } else {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+    }
+  };
+
   const handleEnrichmentComplete = (result: EnrichmentResult) => {
     setEnrichmentResult(result);
+    persistEnrichment(result);
     setStep("preview");
   };
 
@@ -47,7 +76,36 @@ export default function NewPropertyPage() {
   const handleBackToIntake = () => {
     setStep("intake");
     setEnrichmentResult(null);
+    persistEnrichment(null);
     setFormDefaults({});
+  };
+
+  const handleEnrichmentStart = () => {
+    setStep("loading");
+  };
+
+  const handleRerun = async () => {
+    if (!enrichmentResult?.property.address) return;
+    setStep("loading");
+    try {
+      const response = await fetch("/api/properties/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: enrichmentResult.property.address, force: true }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to re-run enrichment");
+      }
+      const result: EnrichmentResult = await response.json();
+      setEnrichmentResult(result);
+      persistEnrichment(result);
+      setFormDefaults(result.property);
+      setStep("preview");
+    } catch (error) {
+      console.error(error);
+      setStep("preview");
+    }
   };
 
   return (
@@ -62,14 +120,23 @@ export default function NewPropertyPage() {
         </Link>
         <PageHeader
           title="New Property"
-          description={
-            step === "intake"
-              ? "Enter an address or listing URL to get started"
-              : step === "preview"
-              ? "Review the property details we found"
-              : "Enter the property details to start your flip"
-          }
+          description="Add your property with guided enrichment"
         />
+        <div className="mt-3">
+          <ProgressSteps
+            current={step === "intake" ? 1 : step === "loading" ? 2 : step === "preview" ? 3 : 4}
+            total={4}
+            label={
+              step === "intake"
+                ? "Step 1: Find your property"
+                : step === "loading"
+                ? "Step 2: Enriching…"
+                : step === "preview"
+                ? "Step 3: Review & confirm"
+                : "Step 4: Finalize details"
+            }
+          />
+        </div>
       </div>
 
       {/* Step 1: Intake */}
@@ -77,29 +144,36 @@ export default function NewPropertyPage() {
         <PropertyIntake
           onEnrichmentComplete={handleEnrichmentComplete}
           onSkip={handleSkipToForm}
+          onStart={handleEnrichmentStart}
           isEnabled={isEnrichmentEnabled}
         />
       )}
 
-      {/* Step 2: Preview */}
+      {/* Step 2: Loading */}
+      {step === "loading" && isEnrichmentEnabled && <EnrichmentLoading />}
+
+      {/* Step 3: Preview */}
       {step === "preview" && enrichmentResult && (
         <div className="space-y-4">
-          <EnrichmentPreview
+          <EnrichmentResultCard
             result={enrichmentResult}
             onAccept={handleAcceptEnrichment}
             onEdit={handleEditEnrichment}
+            onRerun={handleRerun}
           />
-          <button
-            type="button"
-            onClick={handleBackToIntake}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Try a different address
-          </button>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <button
+              type="button"
+              onClick={handleBackToIntake}
+              className="hover:text-foreground underline-offset-4 hover:underline"
+            >
+              ← Try a different address
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Step 3: Form (always shown if intake is disabled or skipped) */}
+      {/* Step 4: Form (always shown if intake is disabled or skipped) */}
       {(step === "form" || !isEnrichmentEnabled) && (
         <div className="space-y-4">
           {step === "form" && isEnrichmentEnabled && (
@@ -111,8 +185,8 @@ export default function NewPropertyPage() {
               ← Back to auto-fill
             </button>
           )}
-          <PropertyForm 
-            defaultValues={formDefaults} 
+          <PropertyForm
+            defaultValues={formDefaults}
             enrichmentResult={enrichmentResult}
           />
         </div>

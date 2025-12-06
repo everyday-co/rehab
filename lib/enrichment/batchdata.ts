@@ -131,7 +131,8 @@ export async function lookupProperty(
  * Look up property by full address string
  */
 export async function lookupPropertyByFullAddress(
-  fullAddress: string
+  fullAddress: string,
+  controller?: AbortController
 ): Promise<BatchDataResult> {
   if (!BATCHDATA_API_KEY) {
     throw new BatchDataError("BatchData API key not configured");
@@ -149,6 +150,7 @@ export async function lookupPropertyByFullAddress(
         Authorization: `Bearer ${BATCHDATA_API_KEY}`,
         "Content-Type": "application/json",
       },
+      signal: controller?.signal,
     }
   );
 
