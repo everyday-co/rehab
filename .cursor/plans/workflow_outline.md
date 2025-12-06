@@ -25,17 +25,19 @@ Love the conveyor belt mental model—clear entry point, guided progression, def
 ---
 
 ## Phase 1: SCOPE DETECT
+
 **User Goal:** "Help me figure out what this property needs"
 
 ### Entry Points (3 Ways In)
 
-| Entry Method | User Action | System Output |
-|--------------|-------------|---------------|
-| **Photo Upload** | Upload 5-15 photos of property | AI-detected issues + suggested line items |
-| **Walkthrough Video** | Upload 2-5 min phone video | Timestamped punch list with frame captures |
-| **Quick Questionnaire** | Answer 10-15 questions about condition | Pre-populated scope based on answers |
+| Entry Method                  | User Action                            | System Output                              |
+| ----------------------------- | -------------------------------------- | ------------------------------------------ |
+| **Photo Upload**        | Upload 5-15 photos of property         | AI-detected issues + suggested line items  |
+| **Walkthrough Video**   | Upload 2-5 min phone video             | Timestamped punch list with frame captures |
+| **Quick Questionnaire** | Answer 10-15 questions about condition | Pre-populated scope based on answers       |
 
 ### Questionnaire Flow (Fallback/Supplement to Photos)
+
 ```
 Property Basics
 ├── Year built? ────────────► Triggers age-based system flags
@@ -81,6 +83,7 @@ Room-by-Room Assessment
 ```
 
 ### Photo AI Detection Logic
+
 ```
 Upload Photo ──► Image Analysis ──► Detected Elements ──► Suggested Actions
 
@@ -100,6 +103,7 @@ Example Kitchen Photo:
 ```
 
 ### Phase 1 Output: **Draft Scope**
+
 - Categorized list of detected/suggested work items
 - Flagged "must do" vs "should consider" vs "optional upgrade"
 - Ready to flow into Budget & Optimize phase
@@ -107,9 +111,11 @@ Example Kitchen Photo:
 ---
 
 ## Phase 2: BUDGET & OPTIMIZE
+
 **User Goal:** "Build a smart budget that maximizes my profit"
 
 ### 2A: Match the Market
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ MARKET FINISH ANALYZER                                              │
@@ -133,6 +139,7 @@ Example Kitchen Photo:
 ```
 
 ### 2B: Visual Comp Gallery
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ KITCHEN COMPARISON                                        [< >]     │
@@ -154,6 +161,7 @@ Example Kitchen Photo:
 ```
 
 ### 2C: Budget Builder (Current Build - Enhanced)
+
 ```
 Two Modes:
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -178,6 +186,7 @@ Two Modes:
 ```
 
 ### 2D: ROI Optimizer
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ BUDGET OPTIMIZER                                                    │
@@ -210,6 +219,7 @@ Two Modes:
 ```
 
 ### 2E: What-If Scenario Builder
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ WHAT-IF SCENARIOS                                                   │
@@ -229,6 +239,7 @@ Two Modes:
 ```
 
 ### 2F: Timeline & Sequencing
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PROJECT TIMELINE                                                    │
@@ -263,6 +274,7 @@ Two Modes:
 ```
 
 ### 2G: Contractor Integration
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ CONTRACTOR HUB                                                      │
@@ -289,6 +301,7 @@ Two Modes:
 ```
 
 ### Phase 2 Output: **Locked Budget + Schedule**
+
 - Finalized line items with costs
 - Timeline with milestones
 - SOW documents ready for contractors
@@ -297,9 +310,11 @@ Two Modes:
 ---
 
 ## Phase 3: BUILD & TRACK
+
 **User Goal:** "Stay on budget and on schedule"
 
 ### 3A: Progress Dashboard
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PROJECT TRACKER: 3811 Whitetail Dr                                  │
@@ -327,6 +342,7 @@ Two Modes:
 ```
 
 ### 3B: Cost Tracking
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ BUDGET vs ACTUAL                                                    │
@@ -349,6 +365,7 @@ Two Modes:
 ```
 
 ### 3C: Change Order Management
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ CHANGE ORDER #003                                                   │
@@ -374,6 +391,7 @@ Two Modes:
 ```
 
 ### 3D: Photo Documentation
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PHOTO TIMELINE: Master Bathroom                                     │
@@ -392,6 +410,7 @@ Two Modes:
 ```
 
 ### Phase 3 Output: **Completed Project**
+
 - Final cost accounting (actual vs budget)
 - Photo documentation (before/after)
 - Timeline record (planned vs actual)
@@ -401,9 +420,11 @@ Two Modes:
 ---
 
 ## Phase 4: CLOSE & LEARN
+
 **User Goal:** "Capture learnings to improve next time"
 
 ### 4A: Project Retrospective
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ FLIP RETROSPECTIVE: 3811 Whitetail Dr                              │
@@ -435,6 +456,7 @@ Two Modes:
 ```
 
 ### 4B: Portfolio Intelligence (Feature #10)
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ YOUR FLIP PORTFOLIO                                                 │
@@ -467,6 +489,7 @@ Two Modes:
 ```
 
 ### 4C: Personalized Future Estimates
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ SMART ESTIMATE: New Property                                        │
@@ -517,3 +540,4 @@ Two Modes:
 │                                             Duration                           │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
+```

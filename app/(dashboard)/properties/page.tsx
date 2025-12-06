@@ -1,16 +1,37 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function PropertiesPage() {
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
+import { PropertyList } from "@/components/properties/property-list";
+import { getProperties } from "@/lib/properties/actions";
+import { getUser } from "@/lib/supabase/server";
+
+export default async function PropertiesPage() {
+  const user = await getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const properties = await getProperties();
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Properties</CardTitle>
-        <Button size="sm">New property</Button>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
-        Property list coming soon.
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <PageHeader
+        title="My Properties"
+        description="Manage your fix & flip projects"
+      >
+        <Link href="/properties/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Property
+          </Button>
+        </Link>
+      </PageHeader>
+
+      <PropertyList properties={properties} />
+    </div>
   );
 }
