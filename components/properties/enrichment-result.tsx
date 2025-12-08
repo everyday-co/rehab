@@ -5,6 +5,7 @@ import { EnrichmentResult } from "@/lib/enrichment/types";
 import { formatCurrency, formatSqft } from "@/lib/enrichment/merge";
 import { Check, Image as ImageIcon } from "lucide-react";
 import { CompsPreview } from "./comps-preview";
+import { ArvWhatIf } from "./arv-whatif";
 
 interface EnrichmentResultProps {
   result: EnrichmentResult;
@@ -137,6 +138,13 @@ export function EnrichmentResultCard({
               PPSF range: {ppsf.low}-{ppsf.high}
             </div>
           )}
+          <ArvWhatIf
+            arv={arvSuggestion}
+            comps={comps}
+            onAccept={(range) => {
+              // no-op here; could lift state if needed
+            }}
+          />
           {warnings.length > 0 && (
             <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
               {warnings.map((w, i) => (
