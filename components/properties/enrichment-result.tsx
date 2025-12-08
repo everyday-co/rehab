@@ -6,12 +6,14 @@ import { formatCurrency, formatSqft } from "@/lib/enrichment/merge";
 import { Check, Image as ImageIcon } from "lucide-react";
 import { CompsPreview } from "./comps-preview";
 import { ArvWhatIf } from "./arv-whatif";
+import { PhotoCuration } from "./photo-curation";
 
 interface EnrichmentResultProps {
   result: EnrichmentResult;
   onAccept: () => void;
   onEdit: () => void;
   onRerun?: () => void;
+  onPhotosChange?: (photos: EnrichmentResult["photos"]) => void;
 }
 
 function Stat({ label, value }: { label: string; value?: string | number }) {
@@ -50,24 +52,26 @@ export function EnrichmentResultCard({
   onAccept,
   onEdit,
   onRerun,
+  onPhotosChange,
 }: EnrichmentResultProps) {
   const { property, batchData, listing, photos, arvSuggestion, status, confidence } = result;
   const comps = result.comps || [];
   const warnings = result.arvWarnings || [];
   const ppsf = result.arvSuggestion?.pricePerSqftRange;
+  const sortedPhotos = [...photos].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
 
   return (
     <div className="space-y-4">
       <Surface className="overflow-hidden p-0">
         {/* Photo strip */}
         <div className="flex h-48 w-full overflow-hidden bg-muted">
-          {photos.length === 0 ? (
+          {sortedPhotos.length === 0 ? (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
               <ImageIcon className="mr-2 h-4 w-4" />
               No photos imported
             </div>
           ) : (
-            photos.slice(0, 4).map((photo, i) => (
+            sortedPhotos.slice(0, 4).map((photo, i) => (
               <div
                 key={i}
                 className="relative flex-1 bg-muted"
@@ -77,9 +81,9 @@ export function EnrichmentResultCard({
                   backgroundPosition: "center",
                 }}
               >
-                {i === 3 && photos.length > 4 && (
+                {i === 3 && sortedPhotos.length > 4 && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-medium text-white">
-                    +{photos.length - 4}
+                    +{sortedPhotos.length - 4}
                   </div>
                 )}
               </div>
@@ -187,6 +191,11 @@ export function EnrichmentResultCard({
 
       {/* Comps */}
       {comps.length > 0 && <CompsPreview comps={comps} />}
+
+      {/* Photo curation */}
+      {photos.length > 0 && onPhotosChange && (
+        <PhotoCuration photos={photos} onChange={onPhotosChange} />
+      )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2">

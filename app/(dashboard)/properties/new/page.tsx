@@ -9,6 +9,7 @@ import { PropertyForm } from "@/components/properties/property-form";
 import { PropertyIntake } from "@/components/properties/property-intake";
 import { EnrichmentResultCard } from "@/components/properties/enrichment-result";
 import { EnrichmentLoading } from "@/components/properties/enrichment-loading";
+import { EnrichmentLoadingTimer } from "@/components/properties/enrichment-loading-timer";
 import { ProgressSteps } from "@/components/ui/progress-steps";
 import type { EnrichmentResult } from "@/lib/enrichment/types";
 import type { PropertyFormValues } from "@/lib/validations";
@@ -108,6 +109,16 @@ export default function NewPropertyPage() {
     }
   };
 
+  const handlePhotosChange = (photos: EnrichmentResult["photos"]) => {
+    if (!enrichmentResult) return;
+    const next: EnrichmentResult = {
+      ...enrichmentResult,
+      photos,
+    };
+    setEnrichmentResult(next);
+    persistEnrichment(next);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -150,7 +161,15 @@ export default function NewPropertyPage() {
       )}
 
       {/* Step 2: Loading */}
-      {step === "loading" && isEnrichmentEnabled && <EnrichmentLoading />}
+      {step === "loading" && isEnrichmentEnabled && (
+        <div className="space-y-3">
+          <EnrichmentLoading />
+          <EnrichmentLoadingTimer />
+          <div className="text-xs text-muted-foreground">
+            If this takes longer than 8s, we’ll retry briefly and then stop to avoid using up your quota. You can re-run to try again.
+          </div>
+        </div>
+      )}
 
       {/* Step 3: Preview */}
       {step === "preview" && enrichmentResult && (
@@ -160,6 +179,7 @@ export default function NewPropertyPage() {
             onAccept={handleAcceptEnrichment}
             onEdit={handleEditEnrichment}
             onRerun={handleRerun}
+            onPhotosChange={handlePhotosChange}
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <button
