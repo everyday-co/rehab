@@ -36,7 +36,7 @@ import {
 } from "@/lib/enrichment/cache";
 import { mergeEnrichmentData } from "@/lib/enrichment/merge";
 import { suggestARV, validateARV } from "@/lib/enrichment/arv-suggester";
-import { fetchComps, createMockComps } from "@/lib/enrichment/comps";
+import { fetchComps, createMockComps, isCompsConfigured } from "@/lib/enrichment/comps";
 
 // Check if enrichment is enabled
 const ENRICHMENT_ENABLED = process.env.ENABLE_PROPERTY_ENRICHMENT !== "false";
@@ -242,20 +242,28 @@ export async function POST(request: NextRequest) {
     if (batchDataResult && (batchDataResult.totalSqft || batchDataResult.aboveGradeSqft)) {
       // Fetch comps (mocked when applicable)
       try {
-        if (USE_MOCKS && batchDataResult.address && batchDataResult.city && batchDataResult.state) {
-          comps = createMockComps({
-            address: batchDataResult.address,
-            city: batchDataResult.city,
-            state: batchDataResult.state,
-            zip: batchDataResult.zip,
-          });
-        } else if (batchDataResult.address && batchDataResult.city && batchDataResult.state) {
-          comps = await fetchComps({
-            address: batchDataResult.address,
-            city: batchDataResult.city,
-            state: batchDataResult.state,
-            zip: batchDataResult.zip,
-          });
+        if (batchDataResult.address && batchDataResult.city && batchDataResult.state) {
+          if (USE_MOCKS) {
+            comps = createMockComps({
+              address: batchDataResult.address,
+              city: batchDataResult.city,
+              state: batchDataResult.state,
+              zip: batchDataResult.zip,
+            });
+          } else {
+            const compsController = new AbortController();
+            const compsTimeout = setTimeout(() => compsController.abort(), 6000);
+            comps = await fetchComps(
+              {
+                address: batchDataResult.address,
+                city: batchDataResult.city,
+                state: batchDataResult.state,
+                zip: batchDataResult.zip,
+              },
+              compsController
+            );
+            clearTimeout(compsTimeout);
+          }
         }
       } catch (error) {
         console.error("Comps fetch failed:", error);

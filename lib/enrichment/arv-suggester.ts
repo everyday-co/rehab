@@ -1,18 +1,9 @@
 /**
  * ARV (After Repair Value) suggestion engine
- * V1: Uses subject property history + user-entered comps
+ * V1: Uses subject property history + comps
  */
 
-import type { BatchDataResult, ARVSuggestion, ListingData } from "./types";
-
-interface Comp {
-  address: string;
-  salePrice: number;
-  sqft: number;
-  beds?: number;
-  baths?: number;
-  soldDate?: string;
-}
+import type { BatchDataResult, ARVSuggestion, ListingData, Comp } from "./types";
 
 interface ARVInput {
   /** Subject property data from BatchData */
