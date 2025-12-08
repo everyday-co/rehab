@@ -10,17 +10,28 @@ interface ARVInput {
   subjectProperty: BatchDataResult;
   /** Listing data if available */
   listing?: ListingData | null;
-  /** User-provided comp sales */
+  /** Comparable sales */
+  comps?: Comp[];
+  /** User-provided comp sales (legacy/custom) */
   userComps?: Comp[];
   /** Assumed rehab quality level */
   rehabLevel?: "cosmetic" | "moderate" | "major" | "gut-rehab";
+  /** Stress percentage +/- applied to ARV outputs */
+  stressPct?: number; // e.g., 0.05 for ±5%
 }
 
 /**
  * Generate ARV suggestion based on available data
  */
 export function suggestARV(input: ARVInput): ARVSuggestion | null {
-  const { subjectProperty, listing, userComps = [], rehabLevel = "moderate" } = input;
+  const {
+    subjectProperty,
+    listing,
+    comps = [],
+    userComps = [],
+    rehabLevel = "moderate",
+    stressPct = 0,
+  } = input;
 
   // Need sqft to calculate price per sqft
   const sqft = subjectProperty.totalSqft || subjectProperty.aboveGradeSqft;
@@ -31,8 +42,8 @@ export function suggestARV(input: ARVInput): ARVSuggestion | null {
   // Collect all price points we can use
   const pricePoints: { price: number; sqft: number; source: string }[] = [];
 
-  // 1. Use user-provided comps (highest priority)
-  for (const comp of userComps) {
+  // 1. Use comps (provider/user) as primary
+  for (const comp of [...comps, ...userComps]) {
     if (comp.salePrice && comp.sqft) {
       pricePoints.push({
         price: comp.salePrice,
@@ -122,9 +133,19 @@ export function suggestARV(input: ARVInput): ARVSuggestion | null {
   const adjustedHigh = highPricePerSqft * premium;
 
   // Calculate final ARV values
-  const arvLow = Math.round((sqft * adjustedLow) / 1000) * 1000;
-  const arvMid = Math.round((sqft * adjustedAvg) / 1000) * 1000;
-  const arvHigh = Math.round((sqft * adjustedHigh) / 1000) * 1000;
+  let arvLow = Math.round((sqft * adjustedLow) / 1000) * 1000;
+  let arvMid = Math.round((sqft * adjustedAvg) / 1000) * 1000;
+  let arvHigh = Math.round((sqft * adjustedHigh) / 1000) * 1000;
+
+  // Apply stress test if provided
+  if (stressPct && stressPct > 0) {
+    const factorLow = 1 - stressPct;
+    const factorHigh = 1 + stressPct;
+    arvLow = Math.round(arvLow * factorLow);
+    arvHigh = Math.round(arvHigh * factorHigh);
+    // Keep mid centered
+    arvMid = Math.round(((arvLow + arvHigh) / 2 / 1000)) * 1000;
+  }
 
   // Determine confidence based on data quality
   let confidence: "high" | "medium" | "low" = "low";

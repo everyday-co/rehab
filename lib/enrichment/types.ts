@@ -112,6 +112,8 @@ export interface ARVSuggestion {
   };
   compsUsed: number;
   confidence: "high" | "medium" | "low";
+  /** Stress percentage applied, if any */
+  stressPct?: number;
 }
 
 /** Complete enrichment result */

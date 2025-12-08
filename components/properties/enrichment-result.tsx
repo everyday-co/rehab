@@ -53,6 +53,7 @@ export function EnrichmentResultCard({
   const { property, batchData, listing, photos, arvSuggestion, status, confidence } = result;
   const comps = result.comps || [];
   const warnings = result.arvWarnings || [];
+  const ppsf = result.arvSuggestion?.pricePerSqftRange;
 
   return (
     <div className="space-y-4">
@@ -131,6 +132,11 @@ export function EnrichmentResultCard({
                   {arvSuggestion.confidence} confidence
                 </Badge>
               </div>
+          {ppsf && (
+            <div className="mt-2 text-xs text-muted-foreground">
+              PPSF range: {ppsf.low}-{ppsf.high}
+            </div>
+          )}
           {warnings.length > 0 && (
             <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
               {warnings.map((w, i) => (
