@@ -41,6 +41,7 @@ import {
   CONDITIONS,
 } from "@/lib/validations";
 import { createProperty } from "@/lib/properties/actions";
+import { savePropertyPhotos } from "@/lib/properties/photos";
 import type { EnrichmentResult } from "@/lib/enrichment/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -118,6 +119,16 @@ export function PropertyForm({ defaultValues, enrichmentResult }: PropertyFormPr
       if (result.error) {
         toast.error(result.error);
       } else if (result.data?.id) {
+        // Save photos if we have enrichment data with photos
+        if (enrichmentResult?.photos && enrichmentResult.photos.length > 0) {
+          const photoResult = await savePropertyPhotos(
+            result.data.id,
+            enrichmentResult.photos
+          );
+          if (photoResult.error) {
+            console.warn("Failed to save photos:", photoResult.error);
+          }
+        }
         toast.success("Property created!");
         router.push(`/properties/${result.data.id}/scope`);
       }

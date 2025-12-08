@@ -256,6 +256,64 @@ export interface Database {
           created_at?: string
         }
       }
+      api_usage: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          occurred_at: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          occurred_at?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          occurred_at?: string
+          metadata?: Json | null
+        }
+      }
+      photos: {
+        Row: {
+          id: string
+          property_id: string
+          url: string
+          thumbnail_url: string | null
+          room: string | null
+          stage: string | null
+          is_main: boolean
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          url: string
+          thumbnail_url?: string | null
+          room?: string | null
+          stage?: string | null
+          is_main?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          url?: string
+          thumbnail_url?: string | null
+          room?: string | null
+          stage?: string | null
+          is_main?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+      }
     }
   }
 }

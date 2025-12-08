@@ -92,9 +92,31 @@ A Next.js 16 application for real estate investors to track fix & flip rehab pro
    - Running totals with contingency
    - Finalize to Phase 2
 
+### ✅ Completed (Infrastructure Enhancements)
+
+1. **API Usage Tracking**
+   - `api_usage` table for per-user usage logging
+   - `lib/rate-limit.ts` - Helper to log requests and get hour/day counts
+   - `GET /api/usage` - Endpoint to fetch user's usage stats
+   - Enrich endpoint instrumented for tracking
+
+2. **Photo Curation**
+   - Drag-and-drop reorder using framer-motion Reorder
+   - Single cover photo enforcement
+   - Room tagging per photo
+   - `photos` table for persistent storage
+   - `lib/properties/photos.ts` - Server actions for save/get
+   - Photos saved when property form is submitted
+
+3. **ARV What-If Profit Calculator**
+   - Collapsible profit band panel in ARV what-if component
+   - Inputs: purchase price, rehab cost, holding costs, selling costs
+   - Shows profit and ROI for low/mid/high ARV bands
+   - Integrated in enrichment preview and budget page
+
 ### 🔄 In Progress / Placeholders
 
-- **Phase 2 (Budget & Optimize)**: Summary view only, full features pending
+- **Phase 2 (Budget & Optimize)**: Summary view + profit calculator, full features pending
 - **Phase 3 (Build & Track)**: Placeholder page
 - **Phase 4 (Close & Learn)**: Placeholder page
 - **Portfolio**: Placeholder with stats cards
@@ -107,6 +129,8 @@ Tables defined in `/types/database.ts`:
 - `rehab_items` - Scope/budget line items
 - `expenses` - Expense tracking (future)
 - `flip_results` - Completed flip analytics (future)
+- `api_usage` - API usage tracking per user (endpoint, timestamp, metadata)
+- `photos` - Property photos with cover/room/order metadata
 
 **Note**: Database migrations need to be run in Supabase. See `/lib/questionnaire/actions.ts` for schema requirements.
 

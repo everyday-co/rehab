@@ -145,6 +145,9 @@ export function EnrichmentResultCard({
           <ArvWhatIf
             arv={arvSuggestion}
             comps={comps}
+            initialInputs={{
+              purchasePrice: listing?.listPrice ?? batchData?.lastSalePrice ?? 0,
+            }}
             onAccept={(range) => {
               // no-op here; could lift state if needed
             }}

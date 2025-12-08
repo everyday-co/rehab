@@ -37,6 +37,7 @@ import {
 import { mergeEnrichmentData } from "@/lib/enrichment/merge";
 import { suggestARV, validateARV } from "@/lib/enrichment/arv-suggester";
 import { fetchComps, createMockComps, isCompsConfigured } from "@/lib/enrichment/comps";
+import { logApiUsage } from "@/lib/rate-limit";
 
 // Check if enrichment is enabled
 const ENRICHMENT_ENABLED = process.env.ENABLE_PROPERTY_ENRICHMENT !== "false";
@@ -60,6 +61,9 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Log API usage (non-blocking)
+    logApiUsage(user.id, "/api/properties/enrich").catch(() => {});
 
     // Parse and validate request body
     const body = await request.json();

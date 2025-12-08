@@ -12,6 +12,7 @@ import { getProperty } from "@/lib/properties/actions";
 import { getScopeItems } from "@/lib/questionnaire/actions";
 import { getUser } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
+import { BudgetProfitCalculator } from "@/components/properties/budget-profit-calculator";
 
 export default async function BudgetPage({
   params,
@@ -103,6 +104,27 @@ export default async function BudgetPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Profit Calculator with stress testing */}
+      {(property.arv_low || property.arv_high) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Profit Calculator</CardTitle>
+            <CardDescription>
+              Stress test your ARV and calculate detailed profit scenarios
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BudgetProfitCalculator
+              arvLow={property.arv_low}
+              arvHigh={property.arv_high}
+              purchasePrice={property.purchase_price}
+              rehabCostLow={totalLow}
+              rehabCostHigh={totalHigh}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Categories breakdown */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

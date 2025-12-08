@@ -81,6 +81,8 @@
 - [x] Purchase price / ARV metrics
 - [x] Projected profit calculation
 - [x] Category breakdown cards
+- [x] Profit calculator with stress testing (ARV what-if panel)
+- [x] Low/mid/high profit bands with ROI
 
 ### Coming Soon
 - [ ] AI recommendations mode
@@ -130,6 +132,30 @@
 - [x] Project checklist
 - [x] README updates
 
+## Infrastructure Enhancements ✅ COMPLETE
+
+### API Usage Tracking
+- [x] Add `api_usage` table type in database.ts
+- [x] Create `lib/rate-limit.ts` helper (log, getUsageCounts)
+- [x] Instrument `/api/properties/enrich` route with logging
+- [x] Add `GET /api/usage` endpoint for reading counts
+- [x] Unit tests for rate-limit helper
+
+### Photo Curation
+- [x] Add `photos` table type in database.ts
+- [x] Drag-and-drop reorder with framer-motion
+- [x] Single cover photo enforcement
+- [x] Room tagging per photo
+- [x] Create `lib/properties/photos.ts` server actions
+- [x] Wire photo persistence to property form submit
+
+### ARV Profit Calculator
+- [x] Add profit band inputs to ARV what-if component
+- [x] Inputs: purchase, rehab, holding, selling costs
+- [x] Show profit and ROI for low/mid/high bands
+- [x] Integrate in enrichment preview
+- [x] Integrate in budget page
+
 ## Database Setup ⚠️ REQUIRED
 
 - [ ] Create Supabase project
@@ -139,6 +165,8 @@
   - [ ] rehab_items
   - [ ] expenses
   - [ ] flip_results
+  - [ ] api_usage
+  - [ ] photos
 - [ ] Enable Row Level Security policies
 - [ ] Configure OAuth providers
 
